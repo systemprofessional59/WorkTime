@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="th"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ระบบลงเวลาพยาบาล</title>
+<style>
+:root{--bg:#f5f7fa;--card:#fff;--tx:#1a2330;--mu:#667085;--pr:#0e7c66;--bd:#d9dee5;--er:#c0392b}
+@media(prefers-color-scheme:dark){:root{--bg:#10151b;--card:#1a212a;--tx:#e8edf3;--mu:#9aa6b4;--pr:#2bb598;--bd:#2c3642;--er:#ef6a5b}}
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,"Noto Sans Thai",sans-serif;background:var(--bg);color:var(--tx)}
+.w{max-width:900px;margin:0 auto;padding:16px}.c{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:16px;margin-bottom:12px}
+input,select,button{font:inherit;padding:10px;border-radius:8px;border:1px solid var(--bd);background:var(--card);color:var(--tx);width:100%;margin:4px 0}
+button{background:var(--pr);color:#fff;border:0;cursor:pointer;font-weight:600}button.s{background:var(--card);color:var(--tx);border:1px solid var(--bd)}button.d{background:var(--er)}
+.r{display:flex;gap:8px;flex-wrap:wrap}.r>*{flex:1;min-width:120px}.m{color:var(--mu);font-size:.9em}.e{color:var(--er)}
+video,canvas,img.p{width:100%;border-radius:10px;background:#000}.hide{display:none}
+table{width:100%;border-collapse:collapse;font-size:.9em}th,td{border-bottom:1px solid var(--bd);padding:6px;text-align:left}
+.t{overflow-x:auto}.tabs button{width:auto;flex:none}
+@media print{body{background:#fff;color:#000}.noprint{display:none!important}.c{border:0}}
+</style></head><body><div class="w">
+<!-- ตั้งค่า: ใส่ URL ของ Web App ที่ Deploy จาก Apps Script -->
+<h2 class="noprint">🩺 ระบบลงเวลาพยาบาล</h2>
+
+<!-- ===== หน้าพยาบาล ===== -->
+<div id="nurse">
+ <div class="c" id="s1">
+  <label>โรงงาน</label><select id="co"></select>
+  <label>รหัสพยาบาล</label><input id="code" inputmode="numeric" autocomplete="off">
+  <button onclick="login()">เข้าสู่ระบบ</button><div id="e1" class="e"></div>
+ </div>
+ <div class="c hide" id="s2">
+  <h3 id="hi"></h3><div class="m" id="clk"></div>
+  <video id="v" autoplay playsinline muted></video><canvas id="cv" class="hide"></canvas>
+  <div class="r"><button id="snap" onclick="snap()">📷 ถ่ายรูป</button><button class="s hide" id="retake" onclick="retake()">ถ่ายใหม่</button></div>
+  <button id="go" class="hide" onclick="send()">ยืนยัน</button><div id="e2" class="e"></div>
+ </div>
+ <div class="c hide" id="s3"><h3 id="ok"></h3><button onclick="location.reload()">เสร็จสิ้น</button></div>
+ <a href="#admin" class="m noprint" onclick="setTimeout(route)">สำหรับแอดมิน</a>
+</div>
+
+<!-- ===== หน้าแอดมิน ===== -->
+<div id="admin" class="hide">
+ <div class="c" id="a0"><input id="pin" type="password" placeholder="PIN แอดมิน"><button onclick="aLogin()">เข้าสู่ระบบ</button><div id="ea" class="e"></div></div>
+ <div id="a1" class="hide">
+  <div class="r tabs noprint"><button onclick="tab('t1')">ภาพรวม</button><button class="s" onclick="tab('t2')">โรงงาน/อีเมล</button><button class="s" onclick="tab('t3')">พยาบาล</button></div>
+  <div id="t1" class="c">
+   <div class="r noprint"><input type="date" id="f"><input type="date" id="t"><select id="fc"></select><select id="fn"></select></div>
+   <div class="r noprint"><button onclick="load()">แสดง</button><button class="s" onclick="xl()">Export Excel</button><button class="s" onclick="window.print()">พิมพ์สรุป</button></div>
+   <h4>สรุปรายคน (วันทำงาน / ชั่วโมงรวม)</h4><div class="t" id="sum"></div>
+   <h4>รายการทั้งหมด</h4><div class="t" id="lg"></div>
+  </div>
+  <div id="t2" class="c hide noprint"><h4>โรงงาน / ผู้รับอีเมล</h4>
+   <input id="cn" placeholder="ชื่อโรงงาน"><input id="cto" placeholder="อีเมลผู้รับ (คั่นด้วย ,)"><input id="ccc" placeholder="อีเมล CC (คั่นด้วย ,)">
+   <input id="cid" type="hidden"><button onclick="saveC()">บันทึก/แก้ไข</button><div class="t" id="cl"></div></div>
+  <div id="t3" class="c hide noprint"><h4>พยาบาล</h4>
+   <input id="nc" placeholder="รหัสพยาบาล"><input id="nn" placeholder="ชื่อ-สกุล"><select id="nco"></select><input id="nr" type="number" placeholder="ค่าแรง/วัน">
+   <button onclick="saveN()">บันทึก/แก้ไข</button><div class="t" id="nl"></div></div>
+ </div>
+</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+const API = 'https://script.google.com/macros/s/AKfycbyDNrLcXbaevHU8jQHTRbRhwp9QDhqidlAAMiZe49Jg1ctsOg_paGE_M1CIMHW54KFpdA/exec';
+const $ = id => document.getElementById(id);
+const call = async (action, o = {}) => {
+  const r = await fetch(API, { method: 'POST', body: JSON.stringify({ action, ...o }) }); // text/plain เลี่ยง CORS preflight
+  const j = await r.json(); if (!j.ok) throw new Error(j.error); return j.data;
+};
+let S = {}, stream, PIN = '', D = { companies: [], nurses: [] }, L = [];
+
+function route() { const a = location.hash === '#admin'; $('nurse').classList.toggle('hide', a); $('admin').classList.toggle('hide', !a); }
+addEventListener('hashchange', route); route();
+
+/* ---- พยาบาล ---- */
+(async () => {
+  try {
+    const cs = await call('companies'), q = new URLSearchParams(location.search).get('c');
+    $('co').innerHTML = cs.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+    if (q) $('co').value = q; // QR: https://your.site/?c=C123
+  } catch (e) { $('e1').textContent = 'ตั้งค่า API ไม่ถูกต้อง: ' + e.message; }
+})();
+
+async function login() {
+  $('e1').textContent = '';
+  try {
+    S = { code: $('code').value.trim(), companyId: $('co').value };
+    const r = await call('login', S); S.next = r.next;
+    $('hi').textContent = `สวัสดี ${r.name} — ${r.next === 'IN' ? 'ยืนยันเข้างาน' : 'ยืนยันออกงาน'}`;
+    $('s1').classList.add('hide'); $('s2').classList.remove('hide');
+    setInterval(() => $('clk').textContent = new Date().toLocaleString('th-TH'), 1000);
+    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+    $('v').srcObject = stream;
+    navigator.geolocation?.getCurrentPosition(p => { S.lat = p.coords.latitude; S.lng = p.coords.longitude; }, () => {});
+  } catch (e) { $('e1').textContent = e.message; }
+}
+function snap() {
+  const v = $('v'), c = $('cv'); c.width = 640; c.height = 640 * v.videoHeight / v.videoWidth;
+  c.getContext('2d').drawImage(v, 0, 0, c.width, c.height);
+  S.photo = c.toDataURL('image/jpeg', .7);
+  v.classList.add('hide'); c.classList.remove('hide');
+  ['snap'].forEach(i => $(i).classList.add('hide')); ['retake', 'go'].forEach(i => $(i).classList.remove('hide'));
+}
+function retake() { $('v').classList.remove('hide'); $('cv').classList.add('hide'); $('snap').classList.remove('hide'); $('retake').classList.add('hide'); $('go').classList.add('hide'); }
+async function send() {
+  $('go').disabled = true; $('e2').textContent = '';
+  try {
+    const r = await call('checkin', { ...S, type: S.next });
+    stream.getTracks().forEach(t => t.stop());
+    $('s2').classList.add('hide'); $('s3').classList.remove('hide');
+    $('ok').textContent = `บันทึก${r.type === 'IN' ? 'เข้างาน' : 'ออกงาน'}สำเร็จ ${r.time}`;
+  } catch (e) { $('e2').textContent = e.message; $('go').disabled = false; }
+}
+
+/* ---- แอดมิน ---- */
+async function aLogin() {
+  try { PIN = $('pin').value; await call('adminLogin', { pin: PIN }); $('a0').classList.add('hide'); $('a1').classList.remove('hide');
+    const t = new Date().toISOString().slice(0, 10); $('t').value = t; $('f').value = t.slice(0, 8) + '01'; await refresh(); load();
+  } catch (e) { $('ea').textContent = e.message; }
+}
+const A = (action, o = {}) => call(action, { pin: PIN, ...o });
+function tab(id) { ['t1', 't2', 't3'].forEach(x => $(x).classList.toggle('hide', x !== id)); }
+async function refresh() {
+  D = await A('adminData');
+  const opt = D.companies.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+  $('fc').innerHTML = '<option value="">ทุกโรงงาน</option>' + opt; $('nco').innerHTML = opt;
+  $('fn').innerHTML = '<option value="">ทุกคน</option>' + D.nurses.map(n => `<option value="${n.code}">${n.name}</option>`).join('');
+  $('cl').innerHTML = tbl(['โรงงาน', 'ผู้รับ', 'CC', ''], D.companies.map(c => [c.name, c.to, c.cc,
+    `<button class="s" onclick="editC('${c.id}')">แก้ไข</button><button class="d" onclick="delC('${c.id}')">ลบ</button>`]));
+  $('nl').innerHTML = tbl(['รหัส', 'ชื่อ', 'โรงงาน', 'ค่าแรง', ''], D.nurses.map(n => [n.code, n.name,
+    (D.companies.find(c => c.id == n.companyId) || {}).name || '', n.dailyRate,
+    `<button class="s" onclick="editN('${n.code}')">แก้ไข</button><button class="d" onclick="delN('${n.code}')">ลบ</button>`]));
+}
+function tbl(h, rows) { return `<table><tr>${h.map(x => `<th>${x}</th>`).join('')}</tr>${rows.map(r => `<tr>${r.map(x => `<td>${x ?? ''}</td>`).join('')}</tr>`).join('')}</table>`; }
+async function saveC() { await A('saveCompany', { item: { id: $('cid').value, name: $('cn').value, to: $('cto').value, cc: $('ccc').value } }); ['cid', 'cn', 'cto', 'ccc'].forEach(i => $(i).value = ''); refresh(); }
+function editC(id) { const c = D.companies.find(x => x.id == id); $('cid').value = c.id; $('cn').value = c.name; $('cto').value = c.to; $('ccc').value = c.cc; }
+async function delC(id) { if (confirm('ลบโรงงานนี้?')) { await A('deleteCompany', { id }); refresh(); } }
+async function saveN() { await A('saveNurse', { item: { code: $('nc').value, name: $('nn').value, companyId: $('nco').value, dailyRate: $('nr').value } }); ['nc', 'nn', 'nr'].forEach(i => $(i).value = ''); refresh(); }
+function editN(c) { const n = D.nurses.find(x => x.code == c); $('nc').value = n.code; $('nn').value = n.name; $('nco').value = n.companyId; $('nr').value = n.dailyRate; }
+async function delN(code) { if (confirm('ลบพยาบาลคนนี้?')) { await A('deleteNurse', { code }); refresh(); } }
+
+async function load() {
+  L = await A('logs', { from: $('f').value, to: $('t').value, companyId: $('fc').value, code: $('fn').value });
+  const by = {};
+  L.forEach(l => { const k = l.code; by[k] = by[k] || { name: l.name, co: l.company, days: {} };
+    const d = by[k].days[l.date] = by[k].days[l.date] || {}; if (l.type === 'IN') d.i = d.i || l.timestamp; else d.o = l.timestamp; });
+  const rows = Object.values(by).map(p => { let h = 0, n = 0; Object.values(p.days).forEach(d => { if (d.i && d.o) { n++; h += (new Date(d.o) - new Date(d.i)) / 36e5; } });
+    return [p.name, p.co, n, h.toFixed(2)]; });
+  $('sum').innerHTML = tbl(['ชื่อ', 'โรงงาน', 'วันทำงาน', 'ชั่วโมง'], rows);
+  $('lg').innerHTML = tbl(['เวลา', 'ชื่อ', 'โรงงาน', 'ประเภท', 'รูป'], L.map(l => [l.timestamp, l.name, l.company, l.type === 'IN' ? 'เข้า' : 'ออก', `<a href="${l.photoUrl}" target="_blank">ดู</a>`]));
+  window._sum = rows;
+}
+function xl() {
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([['ชื่อ', 'โรงงาน', 'วันทำงาน', 'ชั่วโมง'], ...(window._sum || [])]), 'สรุป');
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(L.map(l => ({ เวลา: l.timestamp, ชื่อ: l.name, โรงงาน: l.company, ประเภท: l.type, รูป: l.photoUrl }))), 'รายการ');
+  XLSX.writeFile(wb, `attendance_${$('f').value}_${$('t').value}.xlsx`);
+}
+</script></body></html>
