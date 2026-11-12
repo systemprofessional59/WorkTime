@@ -3,20 +3,34 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>ระบบลงเวลาพยาบาล</title>
 <style>
-:root{--bg:#f5f7fa;--card:#fff;--tx:#1a2330;--mu:#667085;--pr:#0e7c66;--bd:#d9dee5;--er:#c0392b}
-@media(prefers-color-scheme:dark){:root{--bg:#10151b;--card:#1a212a;--tx:#e8edf3;--mu:#9aa6b4;--pr:#2bb598;--bd:#2c3642;--er:#ef6a5b}}
-*{box-sizing:border-box}body{margin:0;font-family:system-ui,"Noto Sans Thai",sans-serif;background:var(--bg);color:var(--tx)}
-.w{max-width:900px;margin:0 auto;padding:16px}.c{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:16px;margin-bottom:12px}
-input,select,button{font:inherit;padding:10px;border-radius:8px;border:1px solid var(--bd);background:var(--card);color:var(--tx);width:100%;margin:4px 0}
-button{background:var(--pr);color:#fff;border:0;cursor:pointer;font-weight:600}button.s{background:var(--card);color:var(--tx);border:1px solid var(--bd)}button.d{background:var(--er)}
-.r{display:flex;gap:8px;flex-wrap:wrap}.r>*{flex:1;min-width:120px}.m{color:var(--mu);font-size:.9em}.e{color:var(--er)}
-video,canvas,img.p{width:100%;border-radius:10px;background:#000}.hide{display:none}
-table{width:100%;border-collapse:collapse;font-size:.9em}th,td{border-bottom:1px solid var(--bd);padding:6px;text-align:left}
-.t{overflow-x:auto}.tabs button{width:auto;flex:none}
-@media print{body{background:#fff;color:#000}.noprint{display:none!important}.c{border:0}}
+:root{--bg:#eef2f6;--card:#fff;--tx:#14202e;--mu:#64748b;--pr:#0b6e5c;--pr2:#0f8f77;--bd:#dde3ea;--er:#c0392b;--sh:0 1px 3px rgba(16,24,40,.08),0 4px 14px rgba(16,24,40,.06)}
+@media(prefers-color-scheme:dark){:root{--bg:#0d1218;--card:#17202a;--tx:#e8edf3;--mu:#94a3b8;--pr:#1fa88c;--pr2:#2bc4a5;--bd:#2a3541;--er:#ef6a5b;--sh:0 1px 3px rgba(0,0,0,.4)}}
+*{box-sizing:border-box}body{margin:0;font-family:"Noto Sans Thai",system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--tx);line-height:1.5}
+.w{max-width:960px;margin:0 auto;padding:0 16px 32px}
+.nav{display:flex;align-items:center;gap:12px;background:linear-gradient(135deg,#075e4f,#0f8f77);color:#fff;margin:0 -16px 20px;padding:14px 20px;box-shadow:var(--sh)}
+.nav .lg{width:38px;height:38px;border-radius:10px;background:rgba(255,255,255,.18);display:grid;place-items:center;font-size:20px}
+.nav b{display:block;font-size:1.05rem}.nav small{opacity:.8;font-size:.78rem}.nav .sp{flex:1}
+.nav button{width:auto;margin:0;padding:8px 14px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.35);color:#fff}
+.nav button:hover{background:rgba(255,255,255,.28)}
+.c{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:20px;margin-bottom:14px;box-shadow:var(--sh)}
+.c h3,.c h4{margin:0 0 10px}label{display:block;font-size:.85rem;font-weight:600;color:var(--mu);margin-top:10px}
+input,select,button{font:inherit;padding:11px 12px;border-radius:10px;border:1px solid var(--bd);background:var(--card);color:var(--tx);width:100%;margin:4px 0;transition:.15s}
+input:focus,select:focus{outline:0;border-color:var(--pr2);box-shadow:0 0 0 3px rgba(15,143,119,.18)}
+button{background:var(--pr);color:#fff;border:0;cursor:pointer;font-weight:600}button:hover{background:var(--pr2)}button:disabled{opacity:.5}
+button.s{background:var(--card);color:var(--tx);border:1px solid var(--bd)}button.s:hover{background:var(--bg)}button.d{background:var(--er)}
+.r{display:flex;gap:8px;flex-wrap:wrap}.r>*{flex:1;min-width:120px}.m{color:var(--mu);font-size:.88em}.e{color:var(--er);margin-top:6px}
+.cam{position:relative;border-radius:12px;overflow:hidden;background:#000;margin:10px 0}
+video,canvas{display:block;width:100%;max-height:60vh;object-fit:cover}video.mir{transform:scaleX(-1)}
+.pill{display:inline-block;padding:3px 12px;border-radius:99px;background:rgba(15,143,119,.14);color:var(--pr);font-weight:600;font-size:.85rem}
+.hide{display:none!important}
+table{width:100%;border-collapse:collapse;font-size:.9em}th{background:var(--bg);color:var(--mu);font-size:.78rem;text-transform:uppercase;letter-spacing:.03em}
+th,td{border-bottom:1px solid var(--bd);padding:9px 10px;text-align:left}tr:hover td{background:rgba(15,143,119,.05)}
+td button{width:auto;margin:0 4px 0 0;padding:5px 10px;font-size:.82rem}.t{overflow-x:auto}
+.tabs{gap:6px;margin-bottom:14px}.tabs button{flex:none;width:auto;background:var(--card);color:var(--mu);border:1px solid var(--bd)}.tabs button.on{background:var(--pr);color:#fff;border-color:var(--pr)}
+@media print{body{background:#fff;color:#000}.noprint{display:none!important}.c{border:0;box-shadow:none}}
 </style></head><body><div class="w">
 <!-- ตั้งค่า: ใส่ URL ของ Web App ที่ Deploy จาก Apps Script -->
-<h2 class="noprint">🩺 ระบบลงเวลาพยาบาล</h2>
+<div class="nav noprint"><div class="lg">🩺</div><div><b>ระบบลงเวลาพยาบาล</b><small>Nurse Attendance System</small></div><div class="sp"></div><button id="lo" class="hide" onclick="aLogout()">ออกจากระบบ</button></div>
 
 <!-- ===== หน้าพยาบาล ===== -->
 <div id="nurse">
@@ -26,9 +40,9 @@ table{width:100%;border-collapse:collapse;font-size:.9em}th,td{border-bottom:1px
   <button onclick="login()">เข้าสู่ระบบ</button><div id="e1" class="e"></div>
  </div>
  <div class="c hide" id="s2">
-  <h3 id="hi"></h3><div class="m" id="clk"></div>
-  <video id="v" autoplay playsinline muted></video><canvas id="cv" class="hide"></canvas>
-  <div class="r"><button id="snap" onclick="snap()">📷 ถ่ายรูป</button><button class="s hide" id="retake" onclick="retake()">ถ่ายใหม่</button></div>
+  <span class="pill" id="st"></span><h3 id="hi" style="margin-top:8px"></h3><div class="m" id="clk"></div>
+  <div class="cam"><video id="v" autoplay playsinline muted></video><canvas id="cv" class="hide"></canvas></div>
+  <div class="r"><button id="snap" onclick="snap()">📷 ถ่ายรูป</button><button class="s" id="flip" onclick="flip()">🔄 สลับกล้องหน้า/หลัง</button><button class="s hide" id="retake" onclick="retake()">ถ่ายใหม่</button></div>
   <button id="go" class="hide" onclick="send()">ยืนยัน</button><div id="e2" class="e"></div>
  </div>
  <div class="c hide" id="s3"><h3 id="ok"></h3><button onclick="location.reload()">เสร็จสิ้น</button></div>
@@ -39,7 +53,7 @@ table{width:100%;border-collapse:collapse;font-size:.9em}th,td{border-bottom:1px
 <div id="admin" class="hide">
  <div class="c" id="a0"><input id="pin" type="password" placeholder="PIN แอดมิน"><button onclick="aLogin()">เข้าสู่ระบบ</button><div id="ea" class="e"></div></div>
  <div id="a1" class="hide">
-  <div class="r tabs noprint"><button onclick="tab('t1')">ภาพรวม</button><button class="s" onclick="tab('t2')">โรงงาน/อีเมล</button><button class="s" onclick="tab('t3')">พยาบาล</button></div>
+  <div class="r tabs noprint"><button id="b_t1" class="on" onclick="tab('t1')">📊 ภาพรวม</button><button id="b_t2" onclick="tab('t2')">🏭 โรงงาน/อีเมล</button><button id="b_t3" onclick="tab('t3')">👩‍⚕️ พยาบาล</button></div>
   <div id="t1" class="c">
    <div class="r noprint"><input type="date" id="f"><input type="date" id="t"><select id="fc"></select><select id="fn"></select></div>
    <div class="r noprint"><button onclick="load()">แสดง</button><button class="s" onclick="xl()">Export Excel</button><button class="s" onclick="window.print()">พิมพ์สรุป</button></div>
@@ -58,7 +72,7 @@ table{width:100%;border-collapse:collapse;font-size:.9em}th,td{border-bottom:1px
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
-const API = 'https://script.google.com/macros/s/AKfycbyDNrLcXbaevHU8jQHTRbRhwp9QDhqidlAAMiZe49Jg1ctsOg_paGE_M1CIMHW54KFpdA/exec';
+const API = 'PASTE_YOUR_WEB_APP_URL_HERE';
 const $ = id => document.getElementById(id);
 const call = async (action, o = {}) => {
   const r = await fetch(API, { method: 'POST', body: JSON.stringify({ action, ...o }) }); // text/plain เลี่ยง CORS preflight
@@ -83,22 +97,28 @@ async function login() {
   try {
     S = { code: $('code').value.trim(), companyId: $('co').value };
     const r = await call('login', S); S.next = r.next;
-    $('hi').textContent = `สวัสดี ${r.name} — ${r.next === 'IN' ? 'ยืนยันเข้างาน' : 'ยืนยันออกงาน'}`;
+    $('hi').textContent = `สวัสดี ${r.name}`; $('st').textContent = r.next === 'IN' ? 'ยืนยันเข้างาน' : 'ยืนยันออกงาน';
     $('s1').classList.add('hide'); $('s2').classList.remove('hide');
     setInterval(() => $('clk').textContent = new Date().toLocaleString('th-TH'), 1000);
-    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
-    $('v').srcObject = stream;
+    S.facing = 'user'; await startCam();
     navigator.geolocation?.getCurrentPosition(p => { S.lat = p.coords.latitude; S.lng = p.coords.longitude; }, () => {});
   } catch (e) { $('e1').textContent = e.message; }
 }
+async function startCam() {
+  stream?.getTracks().forEach(t => t.stop());
+  try { stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { exact: S.facing } }, audio: false }); }
+  catch (e) { stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: S.facing }, audio: false }); }
+  $('v').srcObject = stream; $('v').classList.toggle('mir', S.facing === 'user');
+}
+async function flip() { S.facing = S.facing === 'user' ? 'environment' : 'user'; try { await startCam(); } catch (e) { $('e2').textContent = 'สลับกล้องไม่ได้: ' + e.message; } }
 function snap() {
   const v = $('v'), c = $('cv'); c.width = 640; c.height = 640 * v.videoHeight / v.videoWidth;
   c.getContext('2d').drawImage(v, 0, 0, c.width, c.height);
   S.photo = c.toDataURL('image/jpeg', .7);
   v.classList.add('hide'); c.classList.remove('hide');
-  ['snap'].forEach(i => $(i).classList.add('hide')); ['retake', 'go'].forEach(i => $(i).classList.remove('hide'));
+  ['snap', 'flip'].forEach(i => $(i).classList.add('hide')); ['retake', 'go'].forEach(i => $(i).classList.remove('hide'));
 }
-function retake() { $('v').classList.remove('hide'); $('cv').classList.add('hide'); $('snap').classList.remove('hide'); $('retake').classList.add('hide'); $('go').classList.add('hide'); }
+function retake() { $('v').classList.remove('hide'); $('cv').classList.add('hide'); $('snap').classList.remove('hide'); $('flip').classList.remove('hide'); $('retake').classList.add('hide'); $('go').classList.add('hide'); }
 async function send() {
   $('go').disabled = true; $('e2').textContent = '';
   try {
@@ -111,12 +131,13 @@ async function send() {
 
 /* ---- แอดมิน ---- */
 async function aLogin() {
-  try { PIN = $('pin').value; await call('adminLogin', { pin: PIN }); $('a0').classList.add('hide'); $('a1').classList.remove('hide');
+  try { PIN = $('pin').value; await call('adminLogin', { pin: PIN }); $('a0').classList.add('hide'); $('a1').classList.remove('hide'); $('lo').classList.remove('hide');
     const t = new Date().toISOString().slice(0, 10); $('t').value = t; $('f').value = t.slice(0, 8) + '01'; await refresh(); load();
   } catch (e) { $('ea').textContent = e.message; }
 }
 const A = (action, o = {}) => call(action, { pin: PIN, ...o });
-function tab(id) { ['t1', 't2', 't3'].forEach(x => $(x).classList.toggle('hide', x !== id)); }
+function tab(id) { ['t1', 't2', 't3'].forEach(x => { $(x).classList.toggle('hide', x !== id); $('b_' + x).classList.toggle('on', x === id); }); }
+function aLogout() { PIN = ''; D = { companies: [], nurses: [] }; L = []; $('pin').value = ''; $('a1').classList.add('hide'); $('lo').classList.add('hide'); $('a0').classList.remove('hide'); tab('t1'); }
 async function refresh() {
   D = await A('adminData');
   const opt = D.companies.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
