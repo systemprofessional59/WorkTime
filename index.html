@@ -72,7 +72,7 @@ td button{width:auto;margin:0 4px 0 0;padding:5px 10px;font-size:.82rem}.t{overf
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
-const API = 'PASTE_YOUR_WEB_APP_URL_HERE';
+const API = 'https://script.google.com/macros/s/AKfycbyDNrLcXbaevHU8jQHTRbRhwp9QDhqidlAAMiZe49Jg1ctsOg_paGE_M1CIMHW54KFpdA/exec';
 const $ = id => document.getElementById(id);
 const call = async (action, o = {}) => {
   const r = await fetch(API, { method: 'POST', body: JSON.stringify({ action, ...o }) }); // text/plain เลี่ยง CORS preflight
