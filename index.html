@@ -64,7 +64,7 @@ td button{width:auto;margin:0 4px 0 0;padding:5px 10px;font-size:.82rem}.t{overf
    <input id="cn" placeholder="ชื่อโรงงาน"><input id="cto" placeholder="อีเมลผู้รับ (คั่นด้วย ,)"><input id="ccc" placeholder="อีเมล CC (คั่นด้วย ,)">
    <input id="cid" type="hidden"><button onclick="saveC()">บันทึก/แก้ไข</button><div class="t" id="cl"></div></div>
   <div id="t3" class="c hide noprint"><h4>พยาบาล</h4>
-   <input id="nc" placeholder="รหัสพยาบาล"><input id="nn" placeholder="ชื่อ-สกุล"><select id="nco"></select><input id="nr" type="number" placeholder="ค่าแรง/วัน">
+   <input id="nc" placeholder="รหัสพยาบาล"><input id="nn" placeholder="ชื่อ-สกุล"><label>โรงงานที่ประจำ (เลือกได้หลายแห่ง)</label><div id="nco" class="r"></div><input id="nr" type="number" placeholder="ค่าแรง/วัน">
    <button onclick="saveN()">บันทึก/แก้ไข</button><div class="t" id="nl"></div></div>
  </div>
 </div>
@@ -141,20 +141,20 @@ function aLogout() { PIN = ''; D = { companies: [], nurses: [] }; L = []; $('pin
 async function refresh() {
   D = await A('adminData');
   const opt = D.companies.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
-  $('fc').innerHTML = '<option value="">ทุกโรงงาน</option>' + opt; $('nco').innerHTML = opt;
+  $('fc').innerHTML = '<option value="">ทุกโรงงาน</option>' + opt; $('nco').innerHTML = D.companies.map(c => `<label style="display:flex;gap:6px;align-items:center;font-weight:400;color:var(--tx)"><input type="checkbox" value="${c.id}" style="width:auto;margin:0"> ${c.name}</label>`).join('');
   $('fn').innerHTML = '<option value="">ทุกคน</option>' + D.nurses.map(n => `<option value="${n.code}">${n.name}</option>`).join('');
   $('cl').innerHTML = tbl(['โรงงาน', 'ผู้รับ', 'CC', ''], D.companies.map(c => [c.name, c.to, c.cc,
     `<button class="s" onclick="editC('${c.id}')">แก้ไข</button><button class="d" onclick="delC('${c.id}')">ลบ</button>`]));
   $('nl').innerHTML = tbl(['รหัส', 'ชื่อ', 'โรงงาน', 'ค่าแรง', ''], D.nurses.map(n => [n.code, n.name,
-    (D.companies.find(c => c.id == n.companyId) || {}).name || '', n.dailyRate,
+    String(n.companyId).split(',').map(i => (D.companies.find(c => c.id == i.trim()) || {}).name).filter(Boolean).join(', '), n.dailyRate,
     `<button class="s" onclick="editN('${n.code}')">แก้ไข</button><button class="d" onclick="delN('${n.code}')">ลบ</button>`]));
 }
 function tbl(h, rows) { return `<table><tr>${h.map(x => `<th>${x}</th>`).join('')}</tr>${rows.map(r => `<tr>${r.map(x => `<td>${x ?? ''}</td>`).join('')}</tr>`).join('')}</table>`; }
 async function saveC() { await A('saveCompany', { item: { id: $('cid').value, name: $('cn').value, to: $('cto').value, cc: $('ccc').value } }); ['cid', 'cn', 'cto', 'ccc'].forEach(i => $(i).value = ''); refresh(); }
 function editC(id) { const c = D.companies.find(x => x.id == id); $('cid').value = c.id; $('cn').value = c.name; $('cto').value = c.to; $('ccc').value = c.cc; }
 async function delC(id) { if (confirm('ลบโรงงานนี้?')) { await A('deleteCompany', { id }); refresh(); } }
-async function saveN() { await A('saveNurse', { item: { code: $('nc').value, name: $('nn').value, companyId: $('nco').value, dailyRate: $('nr').value } }); ['nc', 'nn', 'nr'].forEach(i => $(i).value = ''); refresh(); }
-function editN(c) { const n = D.nurses.find(x => x.code == c); $('nc').value = n.code; $('nn').value = n.name; $('nco').value = n.companyId; $('nr').value = n.dailyRate; }
+async function saveN() { await A('saveNurse', { item: { code: $('nc').value, name: $('nn').value, companyId: [...document.querySelectorAll('#nco input:checked')].map(i => i.value).join(','), dailyRate: $('nr').value } }); ['nc', 'nn', 'nr'].forEach(i => $(i).value = ''); document.querySelectorAll('#nco input').forEach(i => i.checked = false); refresh(); }
+function editN(c) { const n = D.nurses.find(x => x.code == c); $('nc').value = n.code; $('nn').value = n.name; { const ids = String(n.companyId).split(',').map(s => s.trim()); document.querySelectorAll('#nco input').forEach(i => i.checked = ids.includes(i.value)); } $('nr').value = n.dailyRate; }
 async function delN(code) { if (confirm('ลบพยาบาลคนนี้?')) { await A('deleteNurse', { code }); refresh(); } }
 
 async function load() {
